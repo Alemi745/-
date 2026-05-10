@@ -1,0 +1,907 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Проверка на дружбу</title>
+  <style>
+    :root {
+      --bg1: #ffe7f1;
+      --bg2: #dcecff;
+      --card: rgba(255, 255, 255, 0.86);
+      --text: #25192f;
+      --muted: #6b5d78;
+      --accent: #ff4d8d;
+      --accent2: #7c5cff;
+      --good: #15a36a;
+      --bad: #d93636;
+      --gold: #ffb703;
+      --shadow: 0 24px 70px rgba(92, 64, 130, 0.22);
+      --radius: 26px;
+    }
+
+    * { box-sizing: border-box; }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(255, 77, 141, 0.24), transparent 34%),
+        radial-gradient(circle at bottom right, rgba(124, 92, 255, 0.26), transparent 38%),
+        linear-gradient(135deg, var(--bg1), var(--bg2));
+      padding: 24px;
+    }
+
+    .telegram-link {
+      position: fixed;
+      top: 14px;
+      left: 14px;
+      z-index: 20;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 14px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.75);
+      color: #178fcf;
+      text-decoration: none;
+      font-weight: 800;
+      box-shadow: 0 8px 24px rgba(28, 83, 160, 0.16);
+      backdrop-filter: blur(12px);
+    }
+
+    .wrap {
+      width: min(980px, 100%);
+      margin: 58px auto 20px;
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 22px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(34px, 7vw, 70px);
+      letter-spacing: -2px;
+      line-height: 0.95;
+    }
+
+    .subtitle {
+      margin: 14px auto 0;
+      max-width: 650px;
+      color: var(--muted);
+      font-size: 18px;
+      line-height: 1.5;
+    }
+
+    .card {
+      background: var(--card);
+      border: 1px solid rgba(255, 255, 255, 0.65);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      padding: 24px;
+      backdrop-filter: blur(18px);
+    }
+
+    .menu-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 16px;
+      margin-top: 22px;
+    }
+
+    button, .button {
+      border: none;
+      cursor: pointer;
+      border-radius: 18px;
+      padding: 15px 18px;
+      font-size: 16px;
+      font-weight: 800;
+      color: white;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      box-shadow: 0 10px 24px rgba(124, 92, 255, 0.25);
+      transition: transform 0.18s ease, box-shadow 0.18s ease, opacity 0.18s ease;
+    }
+
+    button:hover, .button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 14px 34px rgba(124, 92, 255, 0.34);
+    }
+
+    button.secondary {
+      background: #ffffff;
+      color: var(--text);
+      border: 1px solid rgba(72, 43, 110, 0.14);
+      box-shadow: none;
+    }
+
+    button.danger {
+      background: linear-gradient(135deg, #ff5c5c, #c83232);
+    }
+
+    button.gold {
+      background: linear-gradient(135deg, #ffc83d, #ff8c42);
+      color: #3d2500;
+    }
+
+    button:disabled {
+      opacity: 0.55;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .section { display: none; }
+    .section.active { display: block; animation: pop 0.22s ease; }
+
+    @keyframes pop {
+      from { opacity: 0; transform: translateY(8px) scale(0.99); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 18px;
+    }
+
+    .topbar h2 { margin: 0; font-size: 28px; }
+
+    .question-box {
+      padding: 20px;
+      border-radius: 22px;
+      background: rgba(255, 255, 255, 0.68);
+      border: 1px solid rgba(72, 43, 110, 0.1);
+    }
+
+    .question-title {
+      font-size: 24px;
+      font-weight: 900;
+      margin: 0 0 14px;
+    }
+
+    .answers {
+      display: grid;
+      gap: 12px;
+    }
+
+    .answer {
+      width: 100%;
+      text-align: left;
+      background: #fff;
+      color: var(--text);
+      border: 1px solid rgba(72, 43, 110, 0.12);
+      box-shadow: none;
+    }
+
+    .answer.selected {
+      outline: 3px solid rgba(255, 77, 141, 0.32);
+      background: #fff2f7;
+    }
+
+    .progress {
+      height: 12px;
+      border-radius: 999px;
+      background: rgba(72, 43, 110, 0.12);
+      overflow: hidden;
+      margin-bottom: 16px;
+    }
+
+    .progress span {
+      display: block;
+      height: 100%;
+      width: 0%;
+      background: linear-gradient(90deg, var(--accent), var(--accent2));
+      transition: width 0.25s ease;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .result {
+      text-align: center;
+      padding: 18px;
+    }
+
+    .score {
+      font-size: clamp(48px, 10vw, 92px);
+      font-weight: 1000;
+      line-height: 1;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+      margin: 8px 0;
+    }
+
+    label {
+      display: block;
+      font-weight: 800;
+      margin: 12px 0 6px;
+    }
+
+    input, textarea, select {
+      width: 100%;
+      border: 1px solid rgba(72, 43, 110, 0.16);
+      border-radius: 16px;
+      padding: 13px 14px;
+      font: inherit;
+      background: rgba(255, 255, 255, 0.86);
+      color: var(--text);
+      outline: none;
+    }
+
+    textarea { min-height: 80px; resize: vertical; }
+
+    .form-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .hint {
+      color: var(--muted);
+      font-size: 14px;
+      line-height: 1.45;
+    }
+
+    .list {
+      display: grid;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .item {
+      padding: 14px;
+      border-radius: 16px;
+      background: rgba(255,255,255,0.7);
+      border: 1px solid rgba(72, 43, 110, 0.1);
+    }
+
+    .item strong { display: block; margin-bottom: 6px; }
+
+    .code-result, .share-box, .status-box {
+      margin-top: 14px;
+      padding: 16px;
+      border-radius: 16px;
+      font-weight: 900;
+    }
+
+    .code-result { display: none; }
+
+    .code-result.ok {
+      display: block;
+      background: rgba(21, 163, 106, 0.12);
+      color: var(--good);
+    }
+
+    .code-result.no {
+      display: block;
+      background: rgba(217, 54, 54, 0.12);
+      color: var(--bad);
+    }
+
+    .status-box {
+      background: rgba(255, 183, 3, 0.15);
+      border: 1px solid rgba(255, 183, 3, 0.35);
+      color: #704600;
+    }
+
+    .share-box {
+      display: none;
+      background: rgba(124, 92, 255, 0.1);
+      border: 1px solid rgba(124, 92, 255, 0.22);
+    }
+
+    .share-box.active { display: block; }
+
+    .pill-row {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .pill {
+      padding: 8px 11px;
+      border-radius: 999px;
+      background: rgba(255,255,255,0.72);
+      border: 1px solid rgba(72, 43, 110, 0.1);
+      font-size: 14px;
+      font-weight: 800;
+    }
+
+    .pill.pro {
+      background: rgba(255, 183, 3, 0.25);
+      border-color: rgba(255, 183, 3, 0.5);
+      color: #704600;
+    }
+
+    @media (max-width: 720px) {
+      body { padding: 14px; }
+      .wrap { margin-top: 64px; }
+      .menu-grid, .form-grid { grid-template-columns: 1fr; }
+      .topbar { align-items: flex-start; flex-direction: column; }
+      .topbar button { width: 100%; }
+    }
+  </style>
+</head>
+<body>
+  <a class="telegram-link" href="https://t.me/yobsdy6853" target="_blank" rel="noopener">✈ Telegram</a>
+
+  <main class="wrap">
+    <section id="menu" class="section active">
+      <div class="hero">
+        <h1>Проверка<br>на дружбу</h1>
+        <p class="subtitle">Главное меню: проходи готовый опрос, создавай свои вопросы и ответы, делись ссылкой на свой тест и вводи секретные коды.</p>
+      </div>
+
+      <div class="card">
+        <div id="accountStatusMenu" class="status-box"></div>
+        <div class="menu-grid">
+          <button onclick="startReadyQuiz()">💖 Готовый опрос на дружбу</button>
+          <button onclick="showSection('custom')">✍️ Сделать свои вопросы</button>
+          <button onclick="showSection('codes')">🔐 Ввести код / промокод</button>
+          <button onclick="showSection('rules')">📌 Как играть</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="quiz" class="section">
+      <div class="card">
+        <div class="topbar">
+          <h2 id="quizTitle">Опрос</h2>
+          <button class="secondary" onclick="showSection('menu')">В меню</button>
+        </div>
+
+        <div class="progress"><span id="progressFill"></span></div>
+        <div class="question-box">
+          <p class="question-title" id="questionText"></p>
+          <div class="answers" id="answersBox"></div>
+          <div class="actions">
+            <button class="secondary" onclick="prevQuestion()">Назад</button>
+            <button onclick="nextQuestion()">Дальше</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="result" class="section">
+      <div class="card result">
+        <h2>Результат дружбы</h2>
+        <div class="score" id="scoreText">0%</div>
+        <p class="subtitle" id="resultText"></p>
+        <div class="actions" style="justify-content:center;">
+          <button onclick="restartQuiz()">Пройти ещё раз</button>
+          <button class="secondary" onclick="showSection('menu')">В главное меню</button>
+        </div>
+      </div>
+    </section>
+
+    <section id="custom" class="section">
+      <div class="card">
+        <div class="topbar">
+          <h2>Свои вопросы</h2>
+          <button class="secondary" onclick="showSection('menu')">В меню</button>
+        </div>
+
+        <div id="accountStatusCustom" class="status-box"></div>
+        <p class="hint">Добавь минимум 10 вопросов, чтобы запустить тест. Без Pro можно создать до 10 вопросов. В Pro вопросы можно создавать без ограничения.</p>
+
+        <label for="customQuestion">Вопрос</label>
+        <textarea id="customQuestion" placeholder="Например: Что я выберу на выходных?"></textarea>
+
+        <div class="form-grid">
+          <div>
+            <label>Ответ 1</label>
+            <input id="a1" placeholder="Ответ" />
+            <input id="s1" type="number" min="0" max="10" value="10" />
+          </div>
+          <div>
+            <label>Ответ 2</label>
+            <input id="a2" placeholder="Ответ" />
+            <input id="s2" type="number" min="0" max="10" value="7" />
+          </div>
+          <div>
+            <label>Ответ 3</label>
+            <input id="a3" placeholder="Ответ" />
+            <input id="s3" type="number" min="0" max="10" value="4" />
+          </div>
+          <div>
+            <label>Ответ 4</label>
+            <input id="a4" placeholder="Ответ" />
+            <input id="s4" type="number" min="0" max="10" value="0" />
+          </div>
+        </div>
+
+        <div class="actions">
+          <button id="addQuestionBtn" onclick="addCustomQuestion()">Добавить вопрос</button>
+          <button onclick="startCustomQuiz()">Запустить свой опрос</button>
+          <button class="gold" onclick="generateShareLink(true)">Создать ссылку на тест</button>
+          <button class="danger" onclick="clearCustomQuestions()">Очистить свои вопросы</button>
+        </div>
+
+        <div class="pill-row">
+          <span class="pill">Добавлено: <span id="customCount">0</span>/<span id="customLimit">10</span></span>
+          <span class="pill pro" id="proPill">Пробная версия: 3 дня</span>
+          <span class="pill">Сохранение: в браузере</span>
+        </div>
+
+        <div id="shareBox" class="share-box">
+          <strong>Ссылка на твой тест готова:</strong>
+          <input id="shareLink" readonly style="margin-top:10px;" />
+          <div class="actions">
+            <button onclick="copyShareLink()">Скопировать ссылку</button>
+          </div>
+          <p class="hint">Ссылка появляется сразу после создания вопросов. В ней сохранены твои вопросы и ответы.</p>
+        </div>
+
+        <div id="customList" class="list"></div>
+      </div>
+    </section>
+
+    <section id="codes" class="section">
+      <div class="card">
+        <div class="topbar">
+          <h2>Ввод кода</h2>
+          <button class="secondary" onclick="showSection('menu')">В меню</button>
+        </div>
+
+        <div id="accountStatusCodes" class="status-box"></div>
+        <p class="hint">Введи один из секретных кодов или промокод. Промокод <b>SUNNY2024</b> даёт Pro на 1 месяц.</p>
+        <label for="codeInput">Код или промокод</label>
+        <input id="codeInput" placeholder="Например: SUNNY2024" />
+        <div class="actions">
+          <button onclick="checkCode()">Проверить код</button>
+          <button class="secondary" onclick="document.getElementById('codeInput').value=''">Очистить</button>
+        </div>
+        <div id="codeResult" class="code-result"></div>
+      </div>
+    </section>
+
+    <section id="rules" class="section">
+      <div class="card">
+        <div class="topbar">
+          <h2>Как играть</h2>
+          <button class="secondary" onclick="showSection('menu')">В меню</button>
+        </div>
+        <div class="item"><strong>1. Готовый опрос</strong>Ответь на 10 вопросов, и сайт покажет процент дружбы.</div>
+        <div class="item"><strong>2. Свой опрос</strong>Создай минимум 10 вопросов, добавь ответы и баллы, потом запусти свой тест.</div>
+        <div class="item"><strong>3. Ссылка на тест</strong>Когда ты создал свои вопросы, нажми «Создать ссылку на тест» или добавляй вопросы дальше — ссылка обновится автоматически.</div>
+        <div class="item"><strong>4. Pro</strong>Пробная версия Pro идёт 3 дня. В Pro можно создавать вопросы без ограничения. Без Pro можно создать до 10 вопросов.</div>
+        <div class="item"><strong>5. Промокод</strong>Промокод SUNNY2024 даёт Pro на 1 месяц.</div>
+        <div class="item"><strong>6. Коды</strong>Обычные коды: 1739, 5024, 8813, 2675, 4401, 9286, 3547, 6190, 7328, 0563.</div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const readyQuestions = [
+      {
+        q: "Что настоящий друг сделает, если тебе грустно?",
+        a: [
+          { text: "Поддержит и выслушает", score: 10 },
+          { text: "Напишет позже", score: 5 },
+          { text: "Сделает вид, что не заметил", score: 1 },
+          { text: "Посмеётся", score: 0 }
+        ]
+      },
+      {
+        q: "Как часто друзья должны общаться?",
+        a: [
+          { text: "Главное — не забывать друг друга", score: 10 },
+          { text: "Каждый день обязательно", score: 7 },
+          { text: "Только когда нужна помощь", score: 2 },
+          { text: "Почти никогда", score: 0 }
+        ]
+      },
+      {
+        q: "Что важнее всего в дружбе?",
+        a: [
+          { text: "Доверие", score: 10 },
+          { text: "Подарки", score: 3 },
+          { text: "Популярность", score: 1 },
+          { text: "Выгода", score: 0 }
+        ]
+      },
+      {
+        q: "Если друг ошибся, что лучше сделать?",
+        a: [
+          { text: "Спокойно поговорить", score: 10 },
+          { text: "Обидеться навсегда", score: 1 },
+          { text: "Рассказать всем", score: 0 },
+          { text: "Сразу заблокировать", score: 2 }
+        ]
+      },
+      {
+        q: "Как понять, что человек хороший друг?",
+        a: [
+          { text: "Он рядом не только в веселье, но и в трудности", score: 10 },
+          { text: "Он всегда соглашается", score: 4 },
+          { text: "У него много подписчиков", score: 1 },
+          { text: "Он даёт списывать", score: 2 }
+        ]
+      },
+      {
+        q: "Что делать, если у друга успех?",
+        a: [
+          { text: "Искренне порадоваться", score: 10 },
+          { text: "Позавидовать", score: 1 },
+          { text: "Сказать, что это случайность", score: 0 },
+          { text: "Ничего не сказать", score: 3 }
+        ]
+      },
+      {
+        q: "Можно ли дружить, если вкусы разные?",
+        a: [
+          { text: "Да, разные вкусы — это нормально", score: 10 },
+          { text: "Можно, но сложно", score: 6 },
+          { text: "Нет, друзья должны быть одинаковыми", score: 1 },
+          { text: "Только если человек меняется ради меня", score: 0 }
+        ]
+      },
+      {
+        q: "Что делать с секретом друга?",
+        a: [
+          { text: "Хранить его", score: 10 },
+          { text: "Рассказать одному человеку", score: 2 },
+          { text: "Выложить в сторис", score: 0 },
+          { text: "Использовать в споре", score: 0 }
+        ]
+      },
+      {
+        q: "Какой подарок лучше для друга?",
+        a: [
+          { text: "То, что сделано с вниманием", score: 10 },
+          { text: "Самый дорогой", score: 4 },
+          { text: "Любой, лишь бы был", score: 6 },
+          { text: "Ничего", score: 1 }
+        ]
+      },
+      {
+        q: "Что значит настоящая дружба?",
+        a: [
+          { text: "Уважение, доверие и поддержка", score: 10 },
+          { text: "Только весёлые моменты", score: 5 },
+          { text: "Польза друг от друга", score: 1 },
+          { text: "Соревнование во всём", score: 0 }
+        ]
+      }
+    ];
+
+    const validCodes = ["1739", "5024", "8813", "2675", "4401", "9286", "3547", "6190", "7328", "0563"];
+    const promoCode = "SUNNY2024";
+    const freeLimit = 10;
+    const minQuestionsToStart = 10;
+    const oneDay = 24 * 60 * 60 * 1000;
+
+    let currentQuestions = [];
+    let currentIndex = 0;
+    let answers = [];
+    let customQuestions = JSON.parse(localStorage.getItem("customFriendQuestions") || "[]");
+
+    initTrial();
+    loadSharedTestFromUrl();
+
+    function initTrial() {
+      if (!localStorage.getItem("trialStartFriendTest")) {
+        localStorage.setItem("trialStartFriendTest", String(Date.now()));
+      }
+    }
+
+    function isProActive() {
+      const proUntil = Number(localStorage.getItem("friendTestProUntil") || 0);
+      return proUntil > Date.now();
+    }
+
+    function isTrialActive() {
+      const trialStart = Number(localStorage.getItem("trialStartFriendTest") || Date.now());
+      return Date.now() - trialStart < 3 * oneDay;
+    }
+
+    function hasUnlimitedQuestions() {
+      return isProActive() || isTrialActive();
+    }
+
+    function getStatusText() {
+      if (isProActive()) {
+        return "⭐ Pro активен до " + formatDate(Number(localStorage.getItem("friendTestProUntil"))) + ". Можно создавать вопросы без ограничения.";
+      }
+
+      if (isTrialActive()) {
+        const trialStart = Number(localStorage.getItem("trialStartFriendTest"));
+        const trialUntil = trialStart + 3 * oneDay;
+        return "🎁 Идёт пробная версия Pro до " + formatDate(trialUntil) + ". Сейчас вопросы можно создавать без ограничения.";
+      }
+
+      return "🔒 Бесплатный режим: можно создать до 10 вопросов. Введи SUNNY2024, чтобы получить Pro на 1 месяц.";
+    }
+
+    function formatDate(timestamp) {
+      return new Date(timestamp).toLocaleDateString("ru-RU", { day: "2-digit", month: "2-digit", year: "numeric" });
+    }
+
+    function updateAccountStatus() {
+      ["accountStatusMenu", "accountStatusCustom", "accountStatusCodes"].forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.textContent = getStatusText();
+      });
+
+      const limitEl = document.getElementById("customLimit");
+      const addBtn = document.getElementById("addQuestionBtn");
+      const proPill = document.getElementById("proPill");
+
+      if (limitEl) limitEl.textContent = hasUnlimitedQuestions() ? "∞" : String(freeLimit);
+      if (addBtn) addBtn.disabled = !hasUnlimitedQuestions() && customQuestions.length >= freeLimit;
+      if (proPill) proPill.textContent = hasUnlimitedQuestions() ? "Pro: без ограничений" : "Free: лимит 10 вопросов";
+    }
+
+    function showSection(id) {
+      document.querySelectorAll(".section").forEach(section => section.classList.remove("active"));
+      document.getElementById(id).classList.add("active");
+      updateAccountStatus();
+      if (id === "custom") renderCustomList();
+    }
+
+    function startReadyQuiz() {
+      currentQuestions = readyQuestions;
+      document.getElementById("quizTitle").textContent = "Готовый опрос на дружбу";
+      startQuiz();
+    }
+
+    function startCustomQuiz() {
+      if (customQuestions.length < minQuestionsToStart) {
+        alert("Нужно добавить минимум 10 своих вопросов.");
+        return;
+      }
+      currentQuestions = customQuestions;
+      document.getElementById("quizTitle").textContent = "Свой опрос на дружбу";
+      startQuiz();
+    }
+
+    function startQuiz() {
+      currentIndex = 0;
+      answers = new Array(currentQuestions.length).fill(null);
+      showSection("quiz");
+      renderQuestion();
+    }
+
+    function renderQuestion() {
+      const question = currentQuestions[currentIndex];
+      const progress = ((currentIndex + 1) / currentQuestions.length) * 100;
+      document.getElementById("progressFill").style.width = progress + "%";
+      document.getElementById("questionText").textContent = `${currentIndex + 1}. ${question.q}`;
+
+      const box = document.getElementById("answersBox");
+      box.innerHTML = "";
+
+      question.a.forEach((answer, index) => {
+        const btn = document.createElement("button");
+        btn.className = "answer" + (answers[currentIndex] === index ? " selected" : "");
+        btn.textContent = answer.text;
+        btn.onclick = () => {
+          answers[currentIndex] = index;
+          renderQuestion();
+        };
+        box.appendChild(btn);
+      });
+    }
+
+    function nextQuestion() {
+      if (answers[currentIndex] === null) {
+        alert("Выбери ответ, чтобы продолжить.");
+        return;
+      }
+      if (currentIndex < currentQuestions.length - 1) {
+        currentIndex++;
+        renderQuestion();
+      } else {
+        finishQuiz();
+      }
+    }
+
+    function prevQuestion() {
+      if (currentIndex > 0) {
+        currentIndex--;
+        renderQuestion();
+      }
+    }
+
+    function finishQuiz() {
+      let score = 0;
+      let max = currentQuestions.length * 10;
+      currentQuestions.forEach((question, index) => {
+        const answerIndex = answers[index];
+        score += question.a[answerIndex].score;
+      });
+
+      const percent = Math.round((score / max) * 100);
+      document.getElementById("scoreText").textContent = percent + "%";
+
+      let text = "";
+      if (percent >= 85) text = "Супер! Эта дружба очень крепкая. Вы реально понимаете друг друга.";
+      else if (percent >= 65) text = "Хорошая дружба! Есть доверие и поддержка, но можно стать ещё ближе.";
+      else if (percent >= 40) text = "Дружба есть, но её нужно укреплять: больше разговаривайте и поддерживайте друг друга.";
+      else text = "Пока дружба слабая. Но всё можно улучшить, если быть честнее и внимательнее.";
+
+      document.getElementById("resultText").textContent = text;
+      showSection("result");
+    }
+
+    function restartQuiz() {
+      if (currentQuestions.length) startQuiz();
+      else showSection("menu");
+    }
+
+    function addCustomQuestion() {
+      if (!hasUnlimitedQuestions() && customQuestions.length >= freeLimit) {
+        alert("Без Pro можно создать только 10 вопросов. Введи промокод SUNNY2024, чтобы получить Pro на 1 месяц.");
+        return;
+      }
+
+      const q = document.getElementById("customQuestion").value.trim();
+      const fields = [
+        ["a1", "s1"], ["a2", "s2"], ["a3", "s3"], ["a4", "s4"]
+      ];
+
+      if (!q) {
+        alert("Напиши вопрос.");
+        return;
+      }
+
+      const a = fields.map(([answerId, scoreId]) => {
+        const text = document.getElementById(answerId).value.trim();
+        const score = Math.max(0, Math.min(10, Number(document.getElementById(scoreId).value || 0)));
+        return { text, score };
+      });
+
+      if (a.some(answer => !answer.text)) {
+        alert("Заполни все 4 ответа.");
+        return;
+      }
+
+      customQuestions.push({ q, a });
+      localStorage.setItem("customFriendQuestions", JSON.stringify(customQuestions));
+
+      document.getElementById("customQuestion").value = "";
+      ["a1", "a2", "a3", "a4"].forEach(id => document.getElementById(id).value = "");
+      document.getElementById("s1").value = 10;
+      document.getElementById("s2").value = 7;
+      document.getElementById("s3").value = 4;
+      document.getElementById("s4").value = 0;
+
+      renderCustomList();
+      generateShareLink(false);
+    }
+
+    function renderCustomList() {
+      document.getElementById("customCount").textContent = customQuestions.length;
+      const list = document.getElementById("customList");
+      list.innerHTML = "";
+
+      customQuestions.forEach((question, index) => {
+        const div = document.createElement("div");
+        div.className = "item";
+        div.innerHTML = `<strong>${index + 1}. ${escapeHtml(question.q)}</strong><span class="hint">${question.a.map(x => escapeHtml(x.text) + " — " + x.score + " б.").join(" | ")}</span>`;
+        list.appendChild(div);
+      });
+
+      updateAccountStatus();
+      if (customQuestions.length > 0) generateShareLink(false);
+    }
+
+    function clearCustomQuestions() {
+      if (!confirm("Удалить все свои вопросы?")) return;
+      customQuestions = [];
+      localStorage.removeItem("customFriendQuestions");
+      document.getElementById("shareBox").classList.remove("active");
+      history.replaceState(null, "", location.pathname + location.search);
+      renderCustomList();
+    }
+
+    function checkCode() {
+      const input = document.getElementById("codeInput").value.trim().toUpperCase();
+      const result = document.getElementById("codeResult");
+
+      if (input === promoCode) {
+        const until = Date.now() + 30 * oneDay;
+        localStorage.setItem("friendTestProUntil", String(until));
+        result.className = "code-result ok";
+        result.textContent = "Промокод принят! Pro активен на 1 месяц. Теперь можно создавать вопросы без ограничения ⭐";
+        updateAccountStatus();
+        return;
+      }
+
+      if (validCodes.includes(input)) {
+        result.className = "code-result ok";
+        result.textContent = "Код принят! Секретный доступ открыт. Ты настоящий друг 💖";
+      } else {
+        result.className = "code-result no";
+        result.textContent = "Код не найден. Проверь цифры и попробуй ещё раз.";
+      }
+    }
+
+    function generateShareLink(showMessage) {
+      if (customQuestions.length === 0) {
+        if (showMessage) alert("Сначала добавь хотя бы один вопрос.");
+        return;
+      }
+
+      const encoded = encodeForUrl(customQuestions);
+      const link = location.origin + location.pathname + location.search + "#test=" + encoded;
+      const input = document.getElementById("shareLink");
+      const box = document.getElementById("shareBox");
+      input.value = link;
+      box.classList.add("active");
+      history.replaceState(null, "", "#test=" + encoded);
+
+      if (showMessage) alert("Ссылка на тест создана!");
+    }
+
+    function copyShareLink() {
+      const link = document.getElementById("shareLink").value;
+      if (!link) return;
+
+      navigator.clipboard.writeText(link).then(() => {
+        alert("Ссылка скопирована!");
+      }).catch(() => {
+        const input = document.getElementById("shareLink");
+        input.select();
+        document.execCommand("copy");
+        alert("Ссылка скопирована!");
+      });
+    }
+
+    function encodeForUrl(data) {
+      const json = JSON.stringify(data);
+      const base64 = btoa(unescape(encodeURIComponent(json)));
+      return base64.replaceAll("+", "-").replaceAll("/", "_").replaceAll("=", "");
+    }
+
+    function decodeFromUrl(value) {
+      let base64 = value.replaceAll("-", "+").replaceAll("_", "/");
+      while (base64.length % 4) base64 += "=";
+      const json = decodeURIComponent(escape(atob(base64)));
+      return JSON.parse(json);
+    }
+
+    function loadSharedTestFromUrl() {
+      if (!location.hash.startsWith("#test=")) return;
+
+      try {
+        const data = decodeFromUrl(location.hash.replace("#test=", ""));
+        if (Array.isArray(data) && data.length > 0) {
+          customQuestions = data;
+          localStorage.setItem("customFriendQuestions", JSON.stringify(customQuestions));
+          setTimeout(() => {
+            showSection("custom");
+            generateShareLink(false);
+          }, 0);
+        }
+      } catch (error) {
+        console.warn("Не получилось загрузить тест из ссылки", error);
+      }
+    }
+
+    function escapeHtml(text) {
+      return String(text)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;")
+        .replaceAll("'", "&#039;");
+    }
+
+    renderCustomList();
+    updateAccountStatus();
+  </script>
+</body>
+</html>
